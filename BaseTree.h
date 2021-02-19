@@ -18,7 +18,7 @@ template <class Key, class Value>
 class Tree
 {
     public:
-        virtual ~Tree() = 0;
+        virtual ~Tree() {};
 
         // To add (not listed in abstract class):
         // Copy assignment constructor (preferably uses abstract Tree class)

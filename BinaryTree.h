@@ -35,7 +35,7 @@ class BinaryTree : public Tree<Key, Value>
     
     public:
         BinaryTree() { m_node_depth = 0; m_node_count = 0; m_root = nullptr; }
-        ~BinaryTree() { delete m_root; }
+        ~BinaryTree() override { delete m_root; }
 
         bool insert(Key key, Value *value, bool overwrite = false) override;
 
