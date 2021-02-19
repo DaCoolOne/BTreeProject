@@ -186,7 +186,7 @@ bool BinaryTree<Key, Value>::remove(Key key)
 }
 
 template<class Key, class Value>
-bool const BinaryTree<Key, Value>::search(Key& out, Value* value)
+bool BinaryTree<Key, Value>::search(Key& out, Value* value)
 {
     // Todo: implement
     return false;
