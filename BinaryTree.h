@@ -43,7 +43,7 @@ class BinaryTree : public Tree<Key, Value>
 
         Value* get(Key key) const override;
 
-        bool const search(Key& out, Value* value) override;
+        bool search(Key& out, Value* value) override;
 
         int count() const override { return m_node_count; }
 

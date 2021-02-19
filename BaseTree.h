@@ -18,6 +18,8 @@ template <class Key, class Value>
 class Tree
 {
     public:
+        virtual ~Tree() = 0;
+
         // To add (not listed in abstract class):
         // Copy assignment constructor (preferably uses abstract Tree class)
         // Copy constructor (preferably uses abstract Tree class)
@@ -36,7 +38,7 @@ class Tree
         virtual Value* get(Key key) const = 0;
 
         // Finds the first key with a certain value.
-        virtual bool const search(Key& out, Value* value) = 0;
+        virtual bool search(Key& out, Value* value) = 0;
 
         // Gets the number of nodes in the tree.
         virtual int count() const = 0;
