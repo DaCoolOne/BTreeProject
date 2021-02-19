@@ -33,3 +33,5 @@
 
 # Custom
 .vscode
+*.png
+*.jpg
