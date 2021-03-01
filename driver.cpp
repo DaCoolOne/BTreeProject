@@ -3,7 +3,9 @@
 #include <iostream>
 #include <cstdlib>
 #include "BinaryTree.h"
+#include "AvlTree.h"
 using b_tree::Tree;
+using b_tree::AvlTree;
 using b_tree::BinaryTree;
 
 using std::cout;
@@ -12,14 +14,21 @@ using std::rand;
 
 void test(Tree<int>* tree)
 {
-    const static int keys[] = { 30,12,300,23,1,70,40 };
+    const static int keys[] = { 30,1,12,300,23,70,40 };
     const static int num_keys = 7;
 
     int temp;
 
     cout << "Insertion of items" << endl;
-    for(int i = 0; i < num_keys; i ++)
-        tree->insert(keys[i], new int(rand() % 100));
+    int a, b;
+    for(int i = 0; i < 40; i ++)
+    {
+        a = rand() % 100;
+        b = rand() % 100;
+        cout << a << "," << b << endl;
+        tree->insert(a, new int(b), true);
+        tree->show(cout);
+    }
 
     cout << "Node count: " << tree->count() << endl;
     cout << "Depth: " << tree->depth() << endl;
@@ -27,6 +36,7 @@ void test(Tree<int>* tree)
     cout << "Diagram:" << endl;
     tree->show(cout);
 
+    /*
     cout << "Access elements:" << endl;
     for(int i = 0; i < 10; i ++) {
         int key = keys[rand() % num_keys];
@@ -81,20 +91,25 @@ void test(Tree<int>* tree)
         tree->show(cout);
     }
 
+    */
+
     cout << "Node count: " << tree->count() << endl;
     cout << "Depth: " << tree->depth() << endl;
-
 }
 
 int main()
 {
+    srand(16);
+
     cout << "Building tree" << endl;
 
-    Tree<int>* tree = new BinaryTree<int>();
+    Tree<int>* tree = new AvlTree<int>();
+    Tree<int>* tree2 = new BinaryTree<int>();
 
     cout << "Start testing" << endl;
 
     test(tree);
+    test(tree2);
     
     cout << "Test end, deleting" << endl;
 

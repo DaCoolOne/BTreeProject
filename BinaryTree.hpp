@@ -15,7 +15,7 @@ template<class Value>
 Value* BinaryTree<Value>::get(int key) const
 {
     Value* val = nullptr;
-    Node<Value>* current = m_root;
+    BinaryNode<Value>* current = m_root;
 
     // Exit loop upon finding value or entering nullptr node.
     while(!val && current) {
@@ -36,7 +36,7 @@ Value* BinaryTree<Value>::get(int key) const
 template<class Value>
 bool BinaryTree<Value>::insert(int key, Value* value, bool overwrite)
 {
-    Node<Value>* current = m_root;
+    BinaryNode<Value>* current = m_root;
 
     int insert_depth = 0;
 
@@ -65,7 +65,7 @@ bool BinaryTree<Value>::insert(int key, Value* value, bool overwrite)
                 }
                 // Node does not exist. Found insertion point.
                 else {
-                    auto newNode = new Node<Value>();
+                    auto newNode = new BinaryNode<Value>();
                     newNode->m_key = key;
                     newNode->m_value = value;
                     current->m_left = newNode;
@@ -82,7 +82,7 @@ bool BinaryTree<Value>::insert(int key, Value* value, bool overwrite)
                 }
                 // Node does not exist. Found insertion point.
                 else {
-                    auto newNode = new Node<Value>();
+                    auto newNode = new BinaryNode<Value>();
                     newNode->m_key = key;
                     newNode->m_value = value;
                     current->m_right = newNode;
@@ -95,7 +95,7 @@ bool BinaryTree<Value>::insert(int key, Value* value, bool overwrite)
     }
 
     // If we get here, then the tree is empty. Insert new key value pair as root node.
-    auto newNode = new Node<Value>();
+    auto newNode = new BinaryNode<Value>();
     newNode->m_key = key;
     newNode->m_value = value;
     m_root = newNode;
@@ -109,13 +109,13 @@ bool BinaryTree<Value>::insert(int key, Value* value, bool overwrite)
 template<class Value>
 bool BinaryTree<Value>::remove(int key)
 {
-    Node<Value>* current = m_root;
+    BinaryNode<Value>* current = m_root;
     // Used for overwriting the parent node to point to new children nodes when deleting.
-    Node<Value>** parent_ptr = &m_root;
+    BinaryNode<Value>** parent_ptr = &m_root;
 
     // Used for when a node has two children.
-    Node<Value>* shift_node = nullptr;
-    Node<Value>** shift_node_parent = nullptr;
+    BinaryNode<Value>* shift_node = nullptr;
+    BinaryNode<Value>** shift_node_parent = nullptr;
 
     while(current) {
         if(current->m_key == key) {
@@ -195,7 +195,7 @@ bool BinaryTree<Value>::remove(int key)
 
 // Search functions.
 template<class Value>
-bool BinaryTree<Value>::search(int& out, const Value* value)
+bool BinaryTree<Value>::search(int& out, const Value* value) const
 {
     // Recursively search the subtrees using a method in the node.
     if(m_root) {
@@ -204,7 +204,7 @@ bool BinaryTree<Value>::search(int& out, const Value* value)
     return false;
 }
 template<class Value>
-bool Node<Value>::search(int& out, const Value* value)
+bool BinaryNode<Value>::search(int& out, const Value* value) const
 {
     // Search value found at current key.
     if(*m_value == *value) {
@@ -228,7 +228,7 @@ bool Node<Value>::search(int& out, const Value* value)
 }
 
 template<class Value>
-void _print_node(std::ostream &out, Node<Value>* node)
+void _print_node(std::ostream &out, BinaryNode<Value>* node)
 {
     if(node) {
         out << node->m_key << '(';

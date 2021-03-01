@@ -4,15 +4,6 @@
 #include <iterator>
 namespace b_tree {
 
-/*
-// Base abstract class for Node. (May need for iteration or finding nodes or something idk)
-template <class Key, class Value>
-class Node
-{
-
-};
-*/
-
 // Base abstract class for trees.
 template <class Value>
 class Tree
@@ -38,7 +29,7 @@ class Tree
         virtual Value* get(int key) const = 0;
 
         // Finds the first key with a certain value.
-        virtual bool search(int& out, const Value* value) = 0;
+        virtual bool search(int& out, const Value* value) const = 0;
 
         // Gets the number of nodes in the tree.
         virtual int count() const = 0;
