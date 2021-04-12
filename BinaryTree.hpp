@@ -228,22 +228,22 @@ bool BinaryNode<Value>::search(int& out, const Value* value) const
 }
 
 template<class Value>
-void _print_node(std::ostream &out, BinaryNode<Value>* node)
+void _print_binary_node(std::ostream &out, BinaryNode<Value>* node)
 {
     if(node) {
         out << node->m_key << '(';
-        _print_node(out, node->m_left);
+        _print_binary_node(out, node->m_left);
         out << ',';
-        _print_node(out, node->m_right);
+        _print_binary_node(out, node->m_right);
         out << ')';
     }
 }
 
 // Outputs the tree.
 template<class Value>
-void BinaryTree<Value>::show(std::ostream &out)
+void BinaryTree<Value>::show(std::ostream &out) const
 {
-    _print_node(out, m_root);
+    _print_binary_node(out, m_root);
     out << endl;
 }
 

@@ -22,17 +22,35 @@ struct AvlNode {
     // Deals with instantiation and deletion.
     AvlNode() { m_parent = nullptr; m_left = nullptr; m_right = nullptr; m_left_depth = 0; m_right_depth = 0; }
     // Recursive node deletion.
-    ~AvlNode() { delete m_value; delete m_left; delete m_right; }
+    ~AvlNode() { delete m_value; if(m_left) delete m_left; if(m_right) delete m_right; }
 
+    // Perform a rotation on the current node.
     AvlNode<Value>* rotate(bool r1, bool r2);
 
     // Used when removing a node to avoid deleting subtrees.
     void clear() { m_left = nullptr; m_right = nullptr; }
     
-    Value* get(int key) const;
+    AvlNode<Value>* get(int key);
+
+    // Shrinks m_left_depth to fit the size of the tree. DOES NOT GROW LEFT DEPTH
+    void shrink_left_depth();
+    // Shrinks m_right_depth to fit the size of the tree. DOES NOT GROW LEFT DEPTH
+    void shrink_right_depth();
+
+    // Assumes both subtrees balance factors are accurate.
+    void recalculate_balance();
+
+    // Finds the node to replace the current node if we want to delete this node.
+    // Returns number of child nodes.
+    short get_successor(AvlNode<Value>*& node) const;
 
     // Used for search.
     bool search(int& out, const Value* value) const;
+
+    // Removes this node from the tree.
+    AvlNode<Value>* pop(AvlNode<Value>*& root);
+
+    void balance(AvlNode<Value>*& root);
 };
 
 template<class Value>
@@ -47,6 +65,7 @@ private:
 
 public:
     AvlTree() { m_node_depth = 0; m_node_count = 0; m_root = nullptr; }
+    ~AvlTree() override { delete m_root; }
 
     bool insert(int key, Value *value, bool overwrite = false) override;
 
@@ -65,10 +84,10 @@ public:
     int count() const override { return m_node_count; }
 
     // Gets the number of nodes in the tree.
-    int depth() const override { return m_node_depth; }
+    int depth() const override { if(m_root) return max(m_root->m_left_depth, m_root->m_right_depth) + 1; else return 0; }
 
     // Print the tree.
-    void show(std::ostream &out) override;
+    void show(std::ostream &out) const override;
 
 };
 

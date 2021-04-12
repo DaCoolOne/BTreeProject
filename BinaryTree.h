@@ -53,7 +53,7 @@ class BinaryTree : public Tree<Value>
 
         int depth() const override { return m_node_depth; }
 
-        void show(std::ostream &out) override;
+        void show(std::ostream &out) const override;
 };
 
 }

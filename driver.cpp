@@ -2,11 +2,15 @@
 
 #include <iostream>
 #include <cstdlib>
+
 #include "BinaryTree.h"
 #include "AvlTree.h"
+#include "BTree.h"
+#include "BPlusTree.h"
+
 using b_tree::Tree;
-using b_tree::AvlTree;
-using b_tree::BinaryTree;
+
+#define TREE_TYPE b_tree::BPlusTree
 
 using std::cout;
 using std::endl;
@@ -14,20 +18,34 @@ using std::rand;
 
 void test(Tree<int>* tree)
 {
-    const static int keys[] = { 30,1,12,300,23,70,40 };
-    const static int num_keys = 7;
+    const static int num_keys = 40;
+    int* keys = new int[num_keys];
 
     int temp;
 
     cout << "Insertion of items" << endl;
     int a, b;
-    for(int i = 0; i < 40; i ++)
+    int i = 0;
+    while(i < num_keys)
     {
         a = rand() % 100;
         b = rand() % 100;
-        cout << a << "," << b << endl;
-        tree->insert(a, new int(b), true);
+        // cout << a << "," << b << endl;
+
+        cout << "\"Insert: " << a << "\"," << endl;
+        // Output I can directly copy+paste into the javascript program that I wrote for visualizing the tree.
+        if (tree->insert(a, new int(b))) {
+            //cout << " SUCCESS!\"," << endl;
+            keys[i] = a;
+            i++;
+        }
+        else {
+            //cout << " FAILURE!\"," << endl;
+        }
+        cout << '"';
         tree->show(cout);
+        cout << "\"," << endl;
+        
     }
 
     cout << "Node count: " << tree->count() << endl;
@@ -35,34 +53,40 @@ void test(Tree<int>* tree)
 
     cout << "Diagram:" << endl;
     tree->show(cout);
+    cout << endl << endl;
 
-    /*
     cout << "Access elements:" << endl;
     for(int i = 0; i < 10; i ++) {
         int key = keys[rand() % num_keys];
         int* val = tree->get(key);
-        if(val)
-            cout << key << ": " << *val << endl;
-        else
+        if(val) {
+            cout << key << ": " << (*val) << endl;
+        } else {
             cout << key << ": nullptr" << endl; // This should never happen in testing.
+        }
     }
 
     cout << "Search tree:" << endl;
     for(int i = 0; i < 10; i ++) {
-        const int* val;
-        if(i >= num_keys) {
-            temp = rand() % 100;
-            val = &temp;
-        }
-        else {
-            val = tree->get(keys[i]);
-        }
+        cout << "Searching for " << keys[i] << endl;
+        const int* val = tree->get(keys[i]);
         int result;
         bool found = tree->search(result, val);
         if(found)
             cout << *val << ": " << result << endl;
         else
             cout << *val << ": not found" << endl;
+    }
+
+    cout << "Random search tree" << endl;
+    for(int i = 0; i < 10; i ++) {
+        const int val = rand() % 100;
+        int result;
+        bool found = tree->search(result, &val);
+        if(found)
+            cout << val << ": " << result << endl;
+        else
+            cout << val << ": not found" << endl;
     }
 
     cout << "Access random keys" << endl;
@@ -90,11 +114,16 @@ void test(Tree<int>* tree)
         cout << "Diagram:" << endl;
         tree->show(cout);
     }
+    
+    cout << "Diagram:" << endl;
+    tree->show(cout);
 
-    */
+    /**/
 
     cout << "Node count: " << tree->count() << endl;
     cout << "Depth: " << tree->depth() << endl;
+
+    delete[] keys;
 }
 
 int main()
@@ -103,13 +132,11 @@ int main()
 
     cout << "Building tree" << endl;
 
-    Tree<int>* tree = new AvlTree<int>();
-    Tree<int>* tree2 = new BinaryTree<int>();
+    Tree<int>* tree = new TREE_TYPE<int>();
 
     cout << "Start testing" << endl;
 
     test(tree);
-    test(tree2);
     
     cout << "Test end, deleting" << endl;
 

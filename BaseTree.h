@@ -9,7 +9,7 @@ template <class Value>
 class Tree
 {
     public:
-        virtual ~Tree() {};
+        virtual ~Tree() {}
 
         // To add (not listed in abstract class):
         // Copy assignment constructor (preferably uses abstract Tree class)
@@ -38,7 +38,7 @@ class Tree
         virtual int depth() const = 0;
 
         // Print the tree.
-        virtual void show(std::ostream &out) { }
+        virtual void show(std::ostream &out) const { }
 
         // Some other potential ideas of things to add:
 };

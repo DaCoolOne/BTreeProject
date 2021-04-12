@@ -6,17 +6,15 @@
 // Used for type detection
 #include "AvlTree.h"
 
-using std::cout;
-using std::endl;
 using std::max;
 
 namespace b_tree {
 
 template<class Value>
-Value* AvlNode<Value>::get(int key) const
+AvlNode<Value>* AvlNode<Value>::get(int key)
 {
     if (key == m_key) {
-        return m_value;
+        return this;
     }
     else if (key < m_key) {
         if (m_left)
@@ -30,6 +28,79 @@ Value* AvlNode<Value>::get(int key) const
         else
             return nullptr;
     }
+}
+
+template<class Value>
+void AvlNode<Value>::recalculate_balance()
+{
+    m_left_depth = m_left ? max(m_left->m_left_depth, m_left->m_right_depth) + 1 : 0;
+    m_right_depth = m_right ? max(m_right->m_left_depth, m_right->m_right_depth) + 1 : 0;
+}
+
+template<class Value>
+void AvlNode<Value>::shrink_left_depth() {
+    if(m_left)
+    {
+        m_left->shrink_left_depth();
+        if(m_left->m_left_depth + 1 < m_left_depth)
+        {
+            m_left->shrink_right_depth();
+            m_left_depth = max(m_left->m_left_depth, m_left->m_right_depth);
+        }
+    }
+    else
+    {
+        m_left_depth = 0;
+    }
+}
+
+template<class Value>
+void AvlNode<Value>::shrink_right_depth() {
+    if(m_right)
+    {
+        m_right->shrink_left_depth();
+        if(m_right->m_left_depth + 1 < m_right_depth)
+        {
+            m_right->shrink_right_depth();
+            m_right_depth = max(m_right->m_left_depth, m_right->m_right_depth);
+        }
+    }
+    else
+    {
+        m_right_depth = 0;
+    }
+}
+
+template<class Value>
+short AvlNode<Value>::get_successor(AvlNode<Value>*& node) const
+{
+    if(m_left) {
+        // Most complicated case
+        if(m_right) {
+            // Remove from larger side of tree.
+            if(m_left_depth >= m_right_depth) {
+                node = m_left;
+                while(node->m_right) node = node->m_right;
+                return 2;
+            }
+            // Select right
+            else {
+                node = m_right;
+                while(node->m_left) node = node->m_left;
+                return 2;
+            }
+        }
+        else {
+            node = m_left;
+            return 1;
+        }
+    }
+    else if(m_right) {
+        node = m_right;
+        return 1;
+    }
+    node = nullptr;
+    return 0;
 }
 
 template<class Value>
@@ -196,14 +267,106 @@ AvlNode<Value>* AvlNode<Value>::rotate(bool r1, bool r2)
     }
 }
 
+template<class Value>
+void AvlNode<Value>::balance(AvlNode<Value>*& root)
+{
+    // cout << "BALANCE START" << endl;
+    AvlNode<Value>* node = this;
+    AvlNode<Value>* last = node;
+
+    short insert_depth = max(m_left_depth, m_right_depth);
+    short balance;
+    short rotation_counter = 0;
+
+    bool ins1, ins2;
+    while(node) {
+        // cout << "Node " << node->m_key << endl;
+        insert_depth++;
+        
+        node->recalculate_balance();
+
+        balance = node->m_right_depth - node->m_left_depth;
+        
+        if (balance == 2 || balance == -2) {
+            // cout << "IMBALANCE" << balance << endl;
+
+            // cout << "CALC ROT 1 " << node->m_left_depth << "," << node->m_right_depth << endl;
+            ins1 = node->m_right_depth > node->m_left_depth;
+
+            // cout << "CALC ROT 2" << endl;
+            if(ins1) ins2 = node->m_right->m_right_depth > node->m_right->m_left_depth;
+            else ins2 = node->m_left->m_right_depth > node->m_left->m_left_depth;
+
+            // cout << "ROTATE" << endl;
+            node = node->rotate(ins1, ins2);
+            insert_depth --;
+
+            if(!(node->m_parent)) root = node;
+            // cout << "BALANCE RESTORED" << endl;
+        }
+        last = node;
+        node = node->m_parent;
+    }
+}
+
+// Returns pointer to the node that needs to be deleted.
+template<class Value>
+AvlNode<Value>* AvlNode<Value>::pop(AvlNode<Value>*& root)
+{
+    // cout << "Popping" << endl;
+    short node_count;
+    AvlNode<Value>* result;
+    AvlNode<Value>* copy_node = nullptr;
+    AvlNode<Value>** parent_node_ptr = nullptr;
+    
+    // Get reference to the parent's pointer to this node.
+    if(m_parent)
+    {
+        if(m_parent->m_left == this)
+            parent_node_ptr = &(m_parent->m_left);
+        else // This is the left node
+            parent_node_ptr = &(m_parent->m_right);
+    }
+    else {
+        parent_node_ptr = &root;
+    }
+
+    // Find node to copy.
+    node_count = get_successor(copy_node);
+    // Cases
+    switch(node_count)
+    {
+        case 0:
+            result = this;
+            *parent_node_ptr = nullptr;
+            break;
+        case 1:
+            *parent_node_ptr = copy_node;
+            copy_node->m_parent = m_parent;
+            result = this;
+            break;
+        case 2:
+            // Case of both nodes have children.
+            m_key = copy_node->m_key;
+            m_value = copy_node->m_value;
+            m_value = nullptr;
+            result = copy_node->pop(root);
+            break;
+    }
+    return result;
+}
+
 // Gets and returns a pointer to the value at the key, or nullptr if
 // the key does not exist in the tree.
 template<class Value>
 Value* AvlTree<Value>::get(int key) const {
     if (m_root)
-        return m_root->get(key);
-    else
-        return nullptr;
+    {
+        AvlNode<Value>* node = m_root->get(key);
+        if(node) return node->m_value;
+    }
+    
+    return nullptr;
 }
 
 template<class Value>
@@ -214,15 +377,9 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
         m_root = new AvlNode<Value>();
         m_root->m_key = key;
         m_root->m_value = value;
-        m_node_depth = 1;
         m_node_count = 1;
         return true;
     }
-
-    // true means right, false means left
-    int bt_len = 0;
-    bool* bt = new bool[m_node_depth + 1];
-    bool success = false;
 
     AvlNode<Value>* node = m_root;
 
@@ -245,7 +402,6 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
         }
         // Insert left
         else if (key < node->m_key) {
-            bt[bt_len++] = false;
             if(node->m_left) {
                 node = node->m_left;
             }
@@ -257,13 +413,12 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
                 n->m_key = key;
                 n->m_value = value;
                 node->m_left = n;
-                m_node_depth = max(depth, m_node_depth);
+                m_node_count ++;
                 break;
             }
         }
         // Insert right
         else {
-            bt[bt_len++] = true;
             if(node->m_right) {
                 node = node->m_right;
             }
@@ -275,45 +430,17 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
                 n->m_key = key;
                 n->m_value = value;
                 node->m_right = n;
-                m_node_depth = max(depth, m_node_depth);
+                m_node_count ++;
                 break;
             }
         }
     }
 
-    // cout << "Rebalance" << endl;
-    // Rebalance the tree.
-    short insert_depth;
-    short balance;
-    short rotation_counter = 0;
-    for(int i = bt_len - 1; i >= 0; i --) {
-        // cout << i << endl;
-        insert_depth = (bt_len - rotation_counter - i);
-        // right
-        if(bt[i])
-            node->m_right_depth = max(node->m_right_depth, insert_depth);
-        // left
-        else
-            node->m_left_depth = max(node->m_left_depth, insert_depth);
-        balance = node->m_right_depth - node->m_left_depth;
-        // Imbalance found
-        if (balance == 2 || balance == -2) {
-            // cout << "Rotating" << endl;
-            node = node->rotate(bt[i], bt[i+1]);
-            rotation_counter ++;
-            if(i == 0) {
-                m_root = node;
-            }
-            // cout << "Balance restored (somewhat)" << endl;
-        }
-        // cout << node->m_key << endl;
-        node = node->m_parent;
-    }
-    // cout << "Insertion complete!" << endl;
+    // Balance the tree propogating back to the root.
+    if (node) node->balance(m_root);
 
-    delete[] bt;
-
-    return success;
+    // Insertion complete. Was successful if node exists.
+    return static_cast<bool>(node);
 }
 
 // Just copy+pasted from BinaryTree.h
@@ -321,85 +448,31 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
 template<class Value>
 bool AvlTree<Value>::remove(int key)
 {
-    
-    AvlNode<Value>* current = m_root;
-    // Used for overwriting the parent node to point to new children nodes when deleting.
-    AvlNode<Value>** parent_ptr = &m_root;
+    // If root node does not exist, removal fails.
+    if(!m_root) return false;
 
-    // Used for when a node has two children.
-    AvlNode<Value>* shift_node = nullptr;
-    AvlNode<Value>** shift_node_parent = nullptr;
+    // Find node to remove
+    AvlNode<Value>* node_to_remove = m_root->get(key);
+    AvlNode<Value>* delete_node;
+    AvlNode<Value>* temp;
+    if(node_to_remove)
+    {
+        delete_node = (node_to_remove->pop(m_root));
+        temp = delete_node->m_parent;
 
-    while(current) {
-        if(current->m_key == key) {
-            // Found node to delete!
-            // First, rearrange the tree so that the node being deleted is no longer used.
+        m_node_count --;
 
-            // Determine case
-            if(current->m_left)
-            {
-                if(current->m_right)
-                {
-                    // The most complex case, two children.
+        delete_node->clear();
+        delete delete_node;
 
-                    // Step one: determine the right-most node in the left subtree.
-                    // This node will be the key node during deletion.
-                    shift_node_parent = &(current->m_left);
-                    shift_node = current->m_left;
-                    while(shift_node->m_right) {
-                        shift_node_parent = &(shift_node->m_right);
-                        shift_node = shift_node->m_right;
-                    }
+        // All parts of the tree below the deleted node do not have
+        // any changes needed to their balance factor.
 
-                    // Step 2, overwrite the shift node's parent to hold the shift node's left subtree.
-                    *shift_node_parent = shift_node->m_left;
-                    
-                    // Step 3, move the shift node to the location of the node currently
-                    // selected for deletion.
-                    shift_node->m_left = current->m_left;
-                    shift_node->m_right = current->m_right;
-                    *parent_ptr = shift_node;
-                }
-                else {
-                    // Single node becomes new "root" node for the subtree.
-                    *parent_ptr = current->m_left;
-                }
-            }
-            else {
-                if(current->m_right)
-                {
-                    // Single node becomes new "root" node for the subtree.
-                    *parent_ptr = current->m_right;
-                }
-                else {
-                    // Else, no children, no changes to the tree needed. Remove parent reference.
-                    *parent_ptr = nullptr;
-                }
-            }
+        // Go backwards through the tree to root updating balance factors.
+        if(temp) temp->balance(m_root);
 
-            // Delete the current node now that the tree has been rearanged to not use it
-            // Set current node pointers to null so we don't accidentally delete any subtrees.
-            current->clear();
-            // Current node is now safe for deletion.
-            delete current;
-
-            m_node_count --;
-
-            // Deletion was successful. Return true.
-            return true;
-        }
-        else {
-            if(current->m_key > key)
-            {
-                parent_ptr = &(current->m_left);
-                current = current->m_left;
-            }
-            else
-            {
-                parent_ptr = &(current->m_right);
-                current = current->m_right;
-            }
-        }
+        // Successful deletion.
+        return true;
     }
 
     // If we reach this point, deletion has failed and the node does not exist. Return false.
@@ -418,23 +491,23 @@ bool AvlTree<Value>::search(int& out, const Value* value) const
 }
 
 template<class Value>
-void _print_node(std::ostream &out, AvlNode<Value>* node)
+void _print_avl_node(std::ostream &out, AvlNode<Value>* node)
 {
     if(node) {
-        // out << node->m_key << "[" << node->m_left_depth << node->m_right_depth << "]" << '(';
+        // out << node->m_key << "[" << node->m_left_depth << node->m_right_depth << "]" << '(' << flush;
         out << node->m_key << '(';
-        _print_node(out, node->m_left);
+        _print_avl_node(out, node->m_left);
         out << ',';
-        _print_node(out, node->m_right);
+        _print_avl_node(out, node->m_right);
         out << ')';
     }
 }
 
 // Outputs the tree.
 template<class Value>
-void AvlTree<Value>::show(std::ostream &out)
+void AvlTree<Value>::show(std::ostream &out) const
 {
-    _print_node(out, m_root);
+    _print_avl_node(out, m_root);
     out << endl;
 }
 
