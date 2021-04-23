@@ -244,12 +244,14 @@ bool BPlusTree<Value>::insert(int key, Value *value, bool overwrite)
 
     m_node_count++;
 
+    /*
     std::ofstream f;
     f.open("BPLUSTREE.txt", std::ios_base::app);
     f << '"';
     show(f);
     f << "\",";
     f.close();
+    */
 
     // cout << "COMPLETE" << endl;
     return true;
