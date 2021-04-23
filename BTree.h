@@ -1,6 +1,10 @@
 #ifndef B_TREE_H
 #define B_TREE_H
 
+#include <iostream>
+using std::cout;
+using std::endl;
+
 #include "BaseTree.h"
 
 namespace b_tree {
@@ -28,6 +32,33 @@ struct BNode {
         m_parent = nullptr;
         m_size = 0;
         m_size_set = false;
+    }
+    BNode(const BNode<Value>& source)
+    {
+        m_parent = nullptr;
+        m_size_set = false;
+        setSize(source.m_max_size);
+        m_size = source.m_size;
+        for(int i = 0; i < m_size; i ++)
+        {
+            m_keys[i] = source.m_keys[i];
+            if(source.m_values[i]) {
+                m_values[i] = new Value(*(source.m_values[i]));
+            }
+            else
+                m_values[i] = nullptr;
+        }
+        for(int i = 0; i < m_size + 1; i ++)
+        {
+            BNode<Value>* val = source.m_children[i];
+            if(val) {
+                m_children[i] = new BNode<Value>(*val);
+                m_children[i]->m_parent = this;
+            }
+            else {
+                m_children[i] = nullptr;
+            }
+        }
     }
     ~BNode() {
         delete[] m_keys;
@@ -91,7 +122,10 @@ private:
 public:
     BTree() { m_node_count = 0; m_node_depth = 0; m_root = nullptr; m_node_default = DEFAULT_B_NODE_SIZE; }
     BTree(int node_size) { m_node_count = 0; m_node_depth = 0; m_root = nullptr; m_node_default = node_size; }
-    ~BTree() override { if(m_root) { m_root->deleteChildren(); delete m_root; } }
+    BTree(const BTree<Value>& source);
+    ~BTree() override { clear(); }
+
+    BTree<Value>& operator=(const BTree<Value>& source);
 
     bool insert(int key, Value *value, bool overwrite = false) override;
 
@@ -106,6 +140,8 @@ public:
     int depth() const override { return m_node_depth; }
 
     void show(std::ostream &out) const override;
+
+    void clear() override;
 };
 
 }

@@ -273,5 +273,44 @@ bool BTree<Value>::remove(int key)
     else return false;
 }
 
+template<class Value>
+BTree<Value>::BTree(const BTree<Value>& source)
+{
+    m_node_count = source.m_node_count;
+    m_node_depth = source.m_node_depth;
+    m_node_default = source.m_node_default;
+    if(source.m_root)
+        m_root = new BNode<Value>(*source.m_root);
+    else
+        m_root = nullptr;
+}
+
+template<class Value>
+BTree<Value>& BTree<Value>::operator=(const BTree<Value>& source)
+{
+    m_root->deleteChildren();
+    delete m_root;
+    m_node_count = source.m_node_count;
+    m_node_depth = source.m_node_depth;
+    m_node_default = source.m_node_default;
+    if(source.m_root)
+        m_root = new BNode<Value>(*source.m_root);
+    else
+        m_root = nullptr;
+    return *this;
+}
+
+template<class Value>
+void BTree<Value>::clear()
+{
+    if(m_root) {
+        m_root->deleteChildren();
+        delete m_root;
+        m_root = nullptr;
+        m_node_depth = 0;
+        m_node_count = 0;
+    }
+}
+
 }
 

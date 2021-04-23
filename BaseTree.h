@@ -11,10 +11,6 @@ class Tree
     public:
         virtual ~Tree() {}
 
-        // To add (not listed in abstract class):
-        // Copy assignment constructor (preferably uses abstract Tree class)
-        // Copy constructor (preferably uses abstract Tree class)
-
         // Returns true if insertion was successful. If the key
         // already exists, then the value is only changed if 
         // overwrite is true.
@@ -37,10 +33,11 @@ class Tree
         // Gets the number of nodes in the tree.
         virtual int depth() const = 0;
 
+        // Clear all of the nodes.
+        virtual void clear() = 0;
+
         // Print the tree.
         virtual void show(std::ostream &out) const { }
-
-        // Some other potential ideas of things to add:
 };
 
 }

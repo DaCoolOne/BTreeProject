@@ -27,9 +27,36 @@ struct BPlusNode {
     bool m_is_leaf;
 
     BPlusNode() { m_children = nullptr; m_keys = nullptr; m_parent = nullptr; }
+    BPlusNode(const BPlusNode<Value>& source)
+    {
+        m_parent = nullptr;
+        init(source.m_is_leaf, source.m_max_size);
+        m_size = source.m_size;
+        for(int i = 0; i < m_size; i++) {
+            m_keys[i] = source.m_keys[i];
+        }
+        if(m_is_leaf) {
+            static_cast<Value**>(m_children)[0] = nullptr;
+            for(int i = 1; i < m_size + 1; i ++) {
+                auto temp = static_cast<Value**>(source.m_children)[i];
+                if(temp)
+                {
+                    static_cast<Value**>(m_children)[i] = new Value(*temp);
+                }
+                else
+                    static_cast<Value**>(m_children)[i] = nullptr;
+            }
+        }
+        else {
+            for(int i = 0; i < m_size + 1; i ++) {
+                auto temp = static_cast<BPlusNode<Value>**>(source.m_children)[i];
+                assert(temp);
+                static_cast<BPlusNode<Value>**>(m_children)[i] = new BPlusNode<Value>(*temp);
+                static_cast<BPlusNode<Value>**>(m_children)[i]->m_parent = this;
+            }
+        }
+    }
     ~BPlusNode() {
-        cout << "DELETING NODE" << endl;
-        cout << m_is_leaf << endl;
         if(m_is_leaf)
         {
             Value** children = static_cast<Value**>(m_children);
@@ -47,12 +74,13 @@ struct BPlusNode {
         delete[] m_keys;
     }
 
+    BPlusNode<Value>* compute_right_node();
+    BPlusNode<Value>* left();
+
     BPlusNode<Value>*& next() { return static_cast<BPlusNode<Value>**>(m_children)[0]; }
 
     void init(bool is_leaf, int size)
     {
-        assert(!m_children);
-
         m_is_leaf = is_leaf;
         m_max_size = size;
         m_min_size = size / 2;
@@ -77,11 +105,11 @@ struct BPlusNode {
     BPlusNode<Value>* find(int& index, int key);
     const BPlusNode<Value>* find(int& index, int key) const;
 
-    void insert(int key, BPlusNode<Value>* value);
+    void insert_node(int key, BPlusNode<Value>* value);
     void insert(int key, Value* value);
 
     // Returns new root node if root node changes
-    BPlusNode<Value>* branch_split(int& nodes);
+    BPlusNode<Value>* branch_split();
 };
 
 template<class Value>
@@ -94,9 +122,12 @@ class BPlusTree : public Tree<Value>
         int m_depth;
 
     public:
-        BPlusTree() { m_node_count = 0; m_root = nullptr; m_node_size = DEFAULT_BPLUS_NODE_SIZE; }
-        BPlusTree(int node_size) { m_node_count = 0; m_root = nullptr; m_node_size = node_size; }
+        BPlusTree() { m_depth = 0; m_node_count = 0; m_root = nullptr; m_node_size = DEFAULT_BPLUS_NODE_SIZE; }
+        BPlusTree(int node_size) { m_depth = 0; m_node_count = 0; m_root = nullptr; m_node_size = node_size; }
+        BPlusTree(const BPlusTree<Value>& tree);
         ~BPlusTree() { delete m_root; }
+
+        BPlusTree<Value>& operator=(const BPlusTree<Value>& src);
 
         bool insert(int key, Value *value, bool overwrite = false) override;
 
@@ -111,6 +142,8 @@ class BPlusTree : public Tree<Value>
         int depth() const override { return m_depth; };
 
         void show(std::ostream &out) const override;
+
+        void clear() override;
 };
 
 }

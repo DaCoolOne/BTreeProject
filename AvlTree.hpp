@@ -7,12 +7,40 @@
 #include "AvlTree.h"
 
 using std::max;
+using std::endl;
+using std::cout;
 
 namespace b_tree {
 
 template<class Value>
+AvlNode<Value>::AvlNode(const AvlNode<Value>& source)
+{
+    m_parent = nullptr;
+    m_left_depth = source.m_left_depth;
+    m_right_depth = source.m_right_depth;
+    m_value = new Value(*source.m_value);
+    m_key = source.m_key;
+
+    if(source.m_right)
+    {
+        m_right = new AvlNode<Value>(*source.m_right);
+        m_right->m_parent = this;
+    }
+    else
+        m_right = nullptr;
+    if(source.m_left)
+    {
+        m_left = new AvlNode<Value>(*source.m_left);
+        m_left->m_parent = this;
+    }
+    else
+        m_left = nullptr;
+}
+
+template<class Value>
 AvlNode<Value>* AvlNode<Value>::get(int key)
 {
+    // cout << "At " << m_key << endl;
     if (key == m_key) {
         return this;
     }
@@ -272,7 +300,6 @@ void AvlNode<Value>::balance(AvlNode<Value>*& root)
 {
     // cout << "BALANCE START" << endl;
     AvlNode<Value>* node = this;
-    AvlNode<Value>* last = node;
 
     short insert_depth = max(m_left_depth, m_right_depth);
     short balance;
@@ -283,10 +310,13 @@ void AvlNode<Value>::balance(AvlNode<Value>*& root)
         // cout << "Node " << node->m_key << endl;
         insert_depth++;
         
+        // cout << "Recalculate balance" << endl;
         node->recalculate_balance();
 
+        // cout << "New balance" << endl;
         balance = node->m_right_depth - node->m_left_depth;
         
+        // cout << "If" << endl;
         if (balance == 2 || balance == -2) {
             // cout << "IMBALANCE" << balance << endl;
 
@@ -304,7 +334,7 @@ void AvlNode<Value>::balance(AvlNode<Value>*& root)
             if(!(node->m_parent)) root = node;
             // cout << "BALANCE RESTORED" << endl;
         }
-        last = node;
+        // cout << "Move to parent" << endl;
         node = node->m_parent;
     }
 }
@@ -337,30 +367,53 @@ AvlNode<Value>* AvlNode<Value>::pop(AvlNode<Value>*& root)
     switch(node_count)
     {
         case 0:
-            result = this;
             *parent_node_ptr = nullptr;
-            break;
+            return this;
         case 1:
             *parent_node_ptr = copy_node;
             copy_node->m_parent = m_parent;
-            result = this;
-            break;
-        case 2:
+            return this;
+        // case 2:
+        default:
             // Case of both nodes have children.
             m_key = copy_node->m_key;
             m_value = copy_node->m_value;
-            m_value = nullptr;
-            result = copy_node->pop(root);
-            break;
+            copy_node->m_value = nullptr;
+            return copy_node->pop(root);
     }
-    return result;
+}
+
+// Copy Constructor and operator=
+template<class Value>
+AvlTree<Value>& AvlTree<Value>::operator=(const AvlTree<Value> &source)
+{
+    delete m_root;
+    if(source.m_root)
+        m_root = new AvlNode<Value>(*source.m_root);
+    else
+        m_root = nullptr;
+    
+    m_node_count = source.m_node_count;
+    m_node_depth = source.m_node_depth;
+    return *this;
+}
+template<class Value>
+AvlTree<Value>::AvlTree(const AvlTree<Value> &source)
+{
+    if(source.m_root)
+        m_root = new AvlNode<Value>(*source.m_root);
+    else
+        m_root = nullptr;
+    
+    m_node_count = source.m_node_count;
+    m_node_depth = source.m_node_depth;
 }
 
 // Gets and returns a pointer to the value at the key, or nullptr if
 // the key does not exist in the tree.
 template<class Value>
 Value* AvlTree<Value>::get(int key) const {
-    if (m_root)
+    if(m_root)
     {
         AvlNode<Value>* node = m_root->get(key);
         if(node) return node->m_value;
@@ -378,6 +431,7 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
         m_root->m_key = key;
         m_root->m_value = value;
         m_node_count = 1;
+        m_node_depth = 1;
         return true;
     }
 
@@ -438,45 +492,50 @@ bool AvlTree<Value>::insert(int key, Value *value, bool overwrite)
 
     // Balance the tree propogating back to the root.
     if (node) node->balance(m_root);
-
+    
     // Insertion complete. Was successful if node exists.
     return static_cast<bool>(node);
 }
 
-// Just copy+pasted from BinaryTree.h
-// Still need to actually write this code.
 template<class Value>
 bool AvlTree<Value>::remove(int key)
 {
     // If root node does not exist, removal fails.
     if(!m_root) return false;
 
+    // show(cout);
+
     // Find node to remove
+    // cout << "Find node" << endl;
     AvlNode<Value>* node_to_remove = m_root->get(key);
-    AvlNode<Value>* delete_node;
-    AvlNode<Value>* temp;
-    if(node_to_remove)
-    {
-        delete_node = (node_to_remove->pop(m_root));
-        temp = delete_node->m_parent;
+    
+    if(!node_to_remove) return false;
 
-        m_node_count --;
+    // cout << "Set up vars" << endl;
+    AvlNode<Value>* delete_node = (node_to_remove->pop(m_root));
+    AvlNode<Value>* parent = delete_node->m_parent;
+    
+    m_node_count --;
 
-        delete_node->clear();
-        delete delete_node;
+    // cout << "Remove node " << key << " from tree" << endl;
+    delete_node->clear();
+    // if(parent) parent->disown(delete_node);
+    delete delete_node;
 
-        // All parts of the tree below the deleted node do not have
-        // any changes needed to their balance factor.
+    // All parts of the tree below the deleted node do not have
+    // any changes needed to their balance factor.
 
-        // Go backwards through the tree to root updating balance factors.
-        if(temp) temp->balance(m_root);
+    // Go backwards through the tree to root updating balance factors.
+    // cout << "Balance" << endl;
+    if(parent) parent->balance(m_root);
+    else m_root = nullptr;
 
-        // Successful deletion.
-        return true;
-    }
+    // cout << "Deletion success" << endl;
 
-    // If we reach this point, deletion has failed and the node does not exist. Return false.
-    return false;
+    // show(cout);
+
+    // Successful deletion.
+    return true;
 }
 
 // Search functions.
@@ -510,6 +569,51 @@ void AvlTree<Value>::show(std::ostream &out) const
     _print_avl_node(out, m_root);
     out << endl;
 }
+
+template<class Value>
+void AvlTree<Value>::clear()
+{
+    delete m_root;
+    m_node_count = 0;
+    m_node_depth = 0;
+    m_root = nullptr;
+}
+
+/*
+template<class Value>
+bool AvlNode<Value>::is_broken(const AvlNode<Value>* parent) const
+{
+    if(m_parent != parent)
+        return true;
+    if(m_left)
+    {
+        if(m_key < m_left->m_key)
+            return true;
+        if(m_left->is_broken(this))
+            return true;
+    }
+    if(m_right)
+    {
+        if(m_key > m_right->m_key)
+            return true;
+        if(m_right->is_broken(this))
+            return true;
+    }
+    return false;
+}
+
+template<class Value>
+bool AvlTree<Value>::is_broken() const
+{
+    if(m_root)
+    {
+        return m_root->is_broken(nullptr);
+    }
+    else {
+        // Everything looks good
+        return false;
+    }
+}*/
 
 }
 

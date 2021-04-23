@@ -17,6 +17,7 @@ struct BinaryNode {
 
     // Deals with instantiation and deletion.
     BinaryNode() { m_left = nullptr; m_right = nullptr; }
+    BinaryNode(const BinaryNode<Value>& source);
     // Recursive node deletion.
     ~BinaryNode() { delete m_value; delete m_left; delete m_right; }
 
@@ -39,7 +40,10 @@ class BinaryTree : public Tree<Value>
     
     public:
         BinaryTree() { m_node_depth = 0; m_node_count = 0; m_root = nullptr; }
+        BinaryTree(const BinaryTree<Value>& source);
         ~BinaryTree() override { delete m_root; }
+
+        BinaryTree<Value>& operator=(const BinaryTree<Value>& source);
 
         bool insert(int key, Value *value, bool overwrite = false) override;
 
@@ -54,6 +58,8 @@ class BinaryTree : public Tree<Value>
         int depth() const override { return m_node_depth; }
 
         void show(std::ostream &out) const override;
+
+        void clear() override;
 };
 
 }

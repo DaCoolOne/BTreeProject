@@ -12,6 +12,21 @@ using std::endl;
 namespace b_tree {
 
 template<class Value>
+BinaryNode<Value>::BinaryNode(const BinaryNode<Value>& source)
+{
+    m_value = new Value(*source.m_value);
+    m_key = source.m_key;
+    if(source.m_left)
+        m_left = new BinaryNode<Value>(*source.m_left);
+    else
+        m_left = nullptr;
+    if(source.m_right)
+        m_right = new BinaryNode<Value>(*source.m_right);
+    else
+        m_right = nullptr;
+}
+
+template<class Value>
 Value* BinaryTree<Value>::get(int key) const
 {
     Value* val = nullptr;
@@ -99,7 +114,7 @@ bool BinaryTree<Value>::insert(int key, Value* value, bool overwrite)
     newNode->m_key = key;
     newNode->m_value = value;
     m_root = newNode;
-    m_node_depth = 0;
+    m_node_depth = 1;
     m_node_count = 1;
 
     return true;
@@ -247,6 +262,37 @@ void BinaryTree<Value>::show(std::ostream &out) const
     out << endl;
 }
 
+template<class Value>
+BinaryTree<Value>::BinaryTree(const BinaryTree<Value>& source)
+{
+    if(source.m_root)
+        m_root = new BinaryNode<Value>(*source.m_root);
+    else
+        m_root = nullptr;
+    m_node_depth = source.m_node_depth;
+    m_node_count = source.m_node_count;
+}
+template<class Value>
+BinaryTree<Value>& BinaryTree<Value>::operator=(const BinaryTree<Value>& source)
+{
+    delete m_root;
+    if(source.m_root)
+        m_root = new BinaryNode<Value>(*source.m_root);
+    else
+        m_root = nullptr;
+    m_node_depth = source.m_node_depth;
+    m_node_count = source.m_node_count;
+    return *this;
+}
+
+template<class Value>
+void BinaryTree<Value>::clear()
+{
+    delete m_root;
+    m_root = nullptr;
+    m_node_depth = 0;
+    m_node_count = 0;
+}
 }
 
 

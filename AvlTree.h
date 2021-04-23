@@ -2,7 +2,9 @@
 #define AVL_TREE_H
 
 #include "BaseTree.h"
-#include <iostream>
+#include <utility>
+
+using std::max;
 
 namespace b_tree {
 
@@ -21,6 +23,7 @@ struct AvlNode {
 
     // Deals with instantiation and deletion.
     AvlNode() { m_parent = nullptr; m_left = nullptr; m_right = nullptr; m_left_depth = 0; m_right_depth = 0; }
+    AvlNode(const AvlNode<Value>& source);
     // Recursive node deletion.
     ~AvlNode() { delete m_value; if(m_left) delete m_left; if(m_right) delete m_right; }
 
@@ -47,10 +50,20 @@ struct AvlNode {
     // Used for search.
     bool search(int& out, const Value* value) const;
 
+    void disown(AvlNode<Value>* child)
+    {
+        if(m_left == child)
+            m_left = nullptr;
+        if(m_right == child)
+            m_right = nullptr;
+    }
+
     // Removes this node from the tree.
     AvlNode<Value>* pop(AvlNode<Value>*& root);
 
     void balance(AvlNode<Value>*& root);
+
+    // bool is_broken(const AvlNode<Value>* parent) const;
 };
 
 template<class Value>
@@ -65,7 +78,10 @@ private:
 
 public:
     AvlTree() { m_node_depth = 0; m_node_count = 0; m_root = nullptr; }
+    AvlTree(const AvlTree<Value> &source);
     ~AvlTree() override { delete m_root; }
+
+    AvlTree<Value>& operator=(const AvlTree<Value> &source);
 
     bool insert(int key, Value *value, bool overwrite = false) override;
 
@@ -88,6 +104,11 @@ public:
 
     // Print the tree.
     void show(std::ostream &out) const override;
+
+    void clear() override;
+
+    // Detects some pointer issues.
+    // bool is_broken() const;
 
 };
 
