@@ -21,6 +21,10 @@ struct BinaryNode {
     // Recursive node deletion.
     ~BinaryNode() { delete m_value; delete m_left; delete m_right; }
 
+    // Recursive navigate to node
+    BinaryNode<Value>* get(int key);
+    BinaryNode<Value>* get(int key) const;
+
     // Used when removing a node to avoid deleting subtrees.
     void clear() { m_left = nullptr; m_right = nullptr; }
     

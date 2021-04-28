@@ -1,6 +1,7 @@
 
 
 #include <string>
+#include <fstream>
 #include <iostream>
 #include <cstdlib>
 
@@ -36,65 +37,68 @@ bool exists(T arr[], int length, T elmt)
             return true;
     return false;
 }
+const int KEYS_IN_USE = 1000;
+const int NUM_KEYS = 10000;
+const int MAX_RUNS = 100;
 
-void test(Tree<int>* tree)
+void test(Tree<int>* tree, std::ostream& res_stream)
 {
     Timer timer;
     Timer runtime;
     Average<double> grow_shrink_test;
     Average<double> get_test;
     Average<double> ideal_get_test;
+    Average<double> search_test;
     Average<double> sequential_test;
 
-    Average<int> keyg;
     Average<double> runtime_avg;
 
-    int temp = 0;
+    int* out;
+    int temp = 0, out2;
+    double time;
 
     // Construct the key array
-    srand(16);
-    const int KEYS_IN_USE = 1000;
-    const int NUM_KEYS = 5000;
-    const int MAX_RUNS = 10;
     int keys[NUM_KEYS];
     for(int i = 0; i < NUM_KEYS; i ++)
     {
         keys[i] = i;
     }
 
-    for(int runs = 0; runs < MAX_RUNS; runs++)
+    for(int runs = 0; runs < MAX_RUNS;)
     {
+        cout << "Run " << (++runs) << endl;
+        time = 0;
         runtime.start();
 
         // Grow shrink test:
-        timer.start();
         for(int j = 0; j < 100; j ++)
         {
             shuffle(keys, NUM_KEYS);
+            timer.start();
             for(int i = 0; i < KEYS_IN_USE; i ++)
             {
-                tree->insert(keys[i], new int(rand()));
+                tree->insert(keys[i], new int(i));
             }
             shuffle(keys, KEYS_IN_USE);
             for(int i = 0; i < KEYS_IN_USE; i ++)
             {
                 tree->remove(keys[i]);
             }
+            time += timer.elapsed();
         }
-        grow_shrink_test.add(timer.elapsed());
+        grow_shrink_test.add(time);
 
         // Access test:
         shuffle(keys, NUM_KEYS);
         for(int i = 0; i < KEYS_IN_USE; i ++)
         {
-            tree->insert(keys[i], new int(rand()));
+            tree->insert(keys[i], new int(i));
         }
         timer.start();
         for(int j = 0; j < 100; j ++) {
-            // shuffle(keys, KEYS_IN_USE);
             for(int i = 0; i < KEYS_IN_USE; i ++)
             {
-                int* out = tree->get(keys[i]);
+                out = tree->get(keys[i]);
                 temp ^= *out;
             }
         }
@@ -105,18 +109,28 @@ void test(Tree<int>* tree)
         shuffle(keys, NUM_KEYS);
         for(int i = 0; i < KEYS_IN_USE; i ++)
         {
-            tree->insert(keys[i], new int(rand()));
+            tree->insert(keys[i], new int(keys[i]));
         }
+        timer.start();
+        for(int j = 0; j < 100; j ++) {
+            for(int i = 0; i < KEYS_IN_USE; i ++)
+            {
+                out = tree->get(keys[i]);
+                temp ^= *out;
+            }
+        }
+        ideal_get_test.add(timer.elapsed());
+        
         timer.start();
         for(int j = 0; j < 100; j ++) {
             shuffle(keys, KEYS_IN_USE);
             for(int i = 0; i < KEYS_IN_USE; i ++)
             {
-                int* out = tree->get(keys[i]);
-                temp ^= *out;
+                tree->search(out2, keys + i);
+                temp ^= out2;
             }
         }
-        ideal_get_test.add(timer.elapsed());
+        search_test.add(timer.elapsed());
 
         // Sequential insert test:
         tree->clear();
@@ -129,7 +143,7 @@ void test(Tree<int>* tree)
         for(int j = 0; j < 100; j ++) {
             for(int i = 0; i < KEYS_IN_USE; i ++)
             {
-                int* out = tree->get(i);
+                out = tree->get(i);
                 temp ^= *out;
             }
         }
@@ -138,17 +152,23 @@ void test(Tree<int>* tree)
         runtime_avg.add(runtime.elapsed());
     }
     
-    cout << "Grow/shrink test: " << grow_shrink_test.get() << 's' << endl;
-    cout << "Access test: " << get_test.get() << 's' << endl;
+    std::string unit = " " + timer.units();
+    res_stream << "Grow/shrink test: " << grow_shrink_test.get() << unit << endl;
+    res_stream << "Access test: " << get_test.get() << unit << endl;
+    res_stream << "Idealized access test: " << ideal_get_test.get() << unit << endl;
+    res_stream << "Sequential test: " << sequential_test.get() << unit << endl;
+    res_stream << "Search test: " << search_test.get() << unit << endl;
 
-    cout << "Total runtime: " << runtime_avg.get() << 's' << endl;
+    res_stream << "Total runtime: " << runtime_avg.get() << unit << endl;
 
-    cout << temp << endl; // Just to be extra sure that the temp doesn't get optimized out.
+    res_stream << temp << endl; // Just to be extra sure that the temp doesn't get optimized out.
 }
 
-int main()
+int main(int argc, char *argv[])
 {
     srand(time(NULL));
+
+    std::ofstream fout("output.txt");
 
     cout << "[BEGIN]\n" << endl;
 
@@ -159,16 +179,23 @@ int main()
 
     for(int i = 0; i < NUM_TREES; i++)
     {
-        cout << "Start testing " << tree_names[i] << endl;
+        fout << "Test " << tree_names[i] << endl;
+        cout << "Test " << tree_names[i] << endl;
 
-        test(trees[i]);
-
-        cout << "Test end, deleting" << endl << endl;
+        for(int j = 0; j < argc; j ++)
+        {
+            std::string arg(argv[j]);
+            test(trees[i], fout);
+        }
 
         delete trees[i];
+
+        cout << endl;
     }
 
     cout << "Run complete." << endl;
+
+    fout.close();
 
     return 0;
 }

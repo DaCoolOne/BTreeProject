@@ -27,25 +27,36 @@ BinaryNode<Value>::BinaryNode(const BinaryNode<Value>& source)
 }
 
 template<class Value>
+BinaryNode<Value>* BinaryNode<Value>::get(int key)
+{
+    if(m_key == key)
+        return this;
+    if(key < m_key)
+        return m_left ? m_left->get(key) : nullptr;
+    else
+        return m_right ? m_right->get(key) : nullptr;
+}
+template<class Value>
+BinaryNode<Value>* BinaryNode<Value>::get(int key) const
+{
+    if(m_key == key)
+        return this;
+    if(key < m_key)
+        return m_left ? m_left->get(key) : nullptr;
+    else
+        return m_right ? m_right->get(key) : nullptr;
+}
+
+template<class Value>
 Value* BinaryTree<Value>::get(int key) const
 {
-    Value* val = nullptr;
-    BinaryNode<Value>* current = m_root;
+    if(!m_root) return nullptr;
 
-    // Exit loop upon finding value or entering nullptr node.
-    while(!val && current) {
-        if(current->m_key == key) {
-            val = current->m_value;
-        }
-        else {
-            if(current->m_key > key)
-                current = current->m_left;
-            else
-                current = current->m_right;
-        }
-    }
+    BinaryNode<Value>* node = m_root->get(key);
 
-    return val;
+    if(!node) return nullptr;
+
+    return node->m_value;
 }
 
 template<class Value>
